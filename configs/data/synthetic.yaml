@@ -1,0 +1,11 @@
+# Synthetic Data Configuration (for testing and smoke runs)
+
+data:
+  use_synthetic: true
+  n_synthetic_per_cancer: 200
+  batch_size: 32
+  num_workers: 0     # 0 = no multiprocessing (safe for Windows/testing)
+  patch_size: 224
+  n_top_genes: 250
+  val_fraction: 0.1
+  test_fraction: 0.1

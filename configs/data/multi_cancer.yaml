@@ -1,0 +1,16 @@
+# Multi-Cancer Dataset Configuration (all 5 cancer types)
+
+data:
+  use_synthetic: false
+  data_paths:
+    CCRCC: data/raw/ccrcc_visium.h5ad
+    COAD:  data/raw/coad_visium.h5ad
+    LUAD:  data/raw/luad_visium.h5ad
+    PAAD:  data/raw/paad_visium.h5ad
+    PRAD:  data/raw/prad_visium.h5ad
+  n_top_genes: 250
+  patch_size: 224
+  batch_size: 32
+  num_workers: 4
+  val_fraction: 0.1
+  test_fraction: 0.1

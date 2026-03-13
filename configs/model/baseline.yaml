@@ -1,0 +1,10 @@
+# Single-Model Baseline Configuration
+
+model:
+  backbone: resnet50
+  n_genes: 250
+  embed_dim: 512
+  dropout: 0.1
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  pretrained_backbone: true

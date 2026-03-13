@@ -1,0 +1,18 @@
+# HistoMoE ViT-Base/16 Model Configuration
+
+model:
+  backbone: vit_base_patch16_224
+  n_genes: 250
+  n_experts: 5
+  embed_dim: 768
+  meta_dim: 256
+  metadata_mode: lookup
+  gating_mode: topk
+  top_k: 2
+  dropout: 0.1
+  lr: 5.0e-5
+  weight_decay: 1.0e-4
+  lr_scheduler: cosine
+  freeze_backbone: false
+  load_balance_weight: 0.01
+  pretrained_backbone: true

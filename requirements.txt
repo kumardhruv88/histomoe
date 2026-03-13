@@ -1,0 +1,42 @@
+# HistoMoE — Core Runtime Dependencies
+# Install with: pip install -r requirements.txt
+
+# Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+pytorch-lightning>=2.0.0
+einops>=0.6.0
+timm>=0.9.0
+
+# Multimodal / NLP
+transformers>=4.30.0
+
+# Configuration
+hydra-core>=1.3.0
+omegaconf>=2.3.0
+
+# Bioinformatics / Data
+scanpy>=1.9.0
+anndata>=0.9.0
+h5py>=3.8.0
+scipy>=1.10.0
+
+# Data Science
+scikit-learn>=1.2.0
+pandas>=1.5.0
+numpy>=1.23.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+Pillow>=9.4.0
+
+# Web Dashboard & REST API
+streamlit>=1.20.0
+fastapi>=0.95.0
+uvicorn>=0.21.0
+python-multipart>=0.0.6
+
+# Utilities
+tqdm>=4.65.0
+rich>=13.0.0

@@ -1,0 +1,26 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonVersion": "3.12",
+  "pythonPlatform": "Windows",
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "reportMissingModuleSource": "none",
+  "reportMissingImports": "warning",
+  "reportUnusedImport": "warning",
+  "reportGeneralTypeIssues": "warning",
+  "include": [
+    "histomoe",
+    "tests",
+    "train.py",
+    "evaluate.py",
+    "app.py",
+    "api.py",
+    "examples"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/*.egg-info",
+    ".venv"
+  ]
+}

@@ -1,0 +1,19 @@
+# HistoMoE — Development Dependencies
+# Install with: pip install -r requirements-dev.txt
+
+-r requirements.txt
+
+# Testing
+pytest>=7.3.0
+pytest-cov>=4.0.0
+
+# Code Quality
+black>=23.0.0
+ruff>=0.0.270
+mypy>=1.2.0
+
+# Notebooks
+jupyterlab>=4.0.0
+ipykernel>=6.23.0
+ipywidgets>=8.0.0
+plotly>=5.14.0

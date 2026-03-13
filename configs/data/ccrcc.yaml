@@ -1,0 +1,12 @@
+# CCRCC (Clear Cell Renal Cell Carcinoma) Data Configuration
+# Update 'h5ad_path' to your local .h5ad file path
+
+data:
+  cancer_type: CCRCC
+  h5ad_path: data/raw/ccrcc_visium.h5ad
+  n_top_genes: 250
+  patch_size: 224
+  batch_size: 32
+  num_workers: 4
+  val_fraction: 0.15
+  test_fraction: 0.15

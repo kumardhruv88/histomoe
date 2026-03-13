@@ -1,0 +1,12 @@
+# GPU Trainer Configuration (for full training runs)
+
+trainer:
+  max_epochs: 200
+  accelerator: gpu
+  devices: 1
+  precision: "16"          # automatic mixed precision (2x speedup on Ampere+)
+  gradient_clip_val: 1.0
+  log_every_n_steps: 20
+  accumulate_grad_batches: 2  # effective batch size = 2x batch_size
+  enable_progress_bar: true
+  enable_model_summary: true

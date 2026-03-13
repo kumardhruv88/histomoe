@@ -1,0 +1,16 @@
+# HistoMoE Default Experiment Configuration
+# Load with: from histomoe.utils.config import load_config
+
+defaults:
+  - model: histomoe_resnet50
+  - data: synthetic
+  - trainer: cpu
+  - _self_
+
+seed: 42
+output_dir: outputs/
+
+# Logging
+logging:
+  level: INFO
+  log_file: null
