@@ -42,6 +42,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--synthetic",    action="store_true",
                         help="Use synthetic test data")
     parser.add_argument("--n_synthetic",  type=int, default=200)
+    parser.add_argument("--data_dir", type=str, default=None,
+                        help="Directory containing .h5ad files for real dataset")
     parser.add_argument("--batch_size",   type=int, default=64)
     parser.add_argument("--num_workers",  type=int, default=4)
     parser.add_argument("--n_genes",      type=int, default=250)
@@ -165,7 +167,24 @@ def main() -> None:
 
     model = load_model(args)
 
+    # Build data_paths from data_dir
+    data_paths = None
+    if not args.synthetic:
+        if args.data_dir:
+            from histomoe.data.metadata_utils import CANCER_TYPES
+            data_paths = {}
+            data_dir_path = Path(args.data_dir)
+            for ct in CANCER_TYPES:
+                ct_path = data_dir_path / f"{ct}.h5ad"
+                if ct_path.exists():
+                    data_paths[ct] = str(ct_path)
+        else:
+            logger.error("When --synthetic is not used, --data_dir must be provided.")
+            import sys
+            sys.exit(1)
+
     datamodule = HistoMoEDataModule(
+        data_paths=data_paths,
         use_synthetic=args.synthetic,
         n_synthetic_per_cancer=args.n_synthetic,
         batch_size=args.batch_size,

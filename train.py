@@ -69,6 +69,8 @@ def parse_args() -> argparse.Namespace:
                            help="Use synthetic data (no real data files needed)")
     data_grp.add_argument("--n_synthetic", type=int, default=500,
                            help="Synthetic samples per cancer type")
+    data_grp.add_argument("--data_dir", type=str, default=None,
+                           help="Directory containing .h5ad files for real dataset (e.g. CCRCC.h5ad)")
     data_grp.add_argument("--batch_size",  type=int, default=32)
     data_grp.add_argument("--num_workers", type=int, default=4)
     data_grp.add_argument("--patch_size",  type=int, default=224)
@@ -136,8 +138,29 @@ def main() -> None:
     logger.info(f"  backbone={args.backbone} | experts={args.n_experts} | genes={args.n_genes}")
     logger.info(f"  gating={args.gating_mode} | epochs={args.epochs} | batch={args.batch_size}")
 
+    # Build data_paths from data_dir
+    data_paths = None
+    if not args.synthetic:
+        if args.data_dir:
+            from histomoe.data.metadata_utils import CANCER_TYPES
+            data_paths = {}
+            data_dir_path = Path(args.data_dir)
+            for ct in CANCER_TYPES:
+                ct_path = data_dir_path / f"{ct}.h5ad"
+                if ct_path.exists():
+                    data_paths[ct] = str(ct_path)
+                else:
+                    logger.warning(f"Could not find {ct_path} for cancer type {ct}")
+            if not data_paths:
+                logger.error(f"No valid .h5ad files found in {args.data_dir}")
+                sys.exit(1)
+        else:
+            logger.error("When --synthetic is not used, --data_dir must be provided.")
+            sys.exit(1)
+
     # DataModule
     datamodule = HistoMoEDataModule(
+        data_paths=data_paths,
         use_synthetic=args.synthetic,
         n_synthetic_per_cancer=args.n_synthetic,
         batch_size=args.batch_size,
