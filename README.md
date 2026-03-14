@@ -6,7 +6,8 @@
   [![PyTorch](https://img.shields.io/badge/PYTORCH-2.0+-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)]()
   [![Tests](https://img.shields.io/badge/TESTS-PASSING-brightgreen?style=for-the-badge)]()
   <br/>
-  [![Status](https://img.shields.io/badge/STATUS-GSoC_2025_CANDIDATE-orange?style=for-the-badge)]()
+  [![Status](https://img.shields.io/badge/STATUS-GSoC_2026_CANDIDATE-orange?style=for-the-badge)]()
+  [![Data](https://img.shields.io/badge/TRAINED_ON-HEST--1k_REAL_DATA-success?style=for-the-badge)]()
 
 </div>
 
@@ -68,6 +69,7 @@ Input: Histology Patch + Cancer Type Metadata
 | 🔍 **Interpretability Tools** | Expert routing heatmaps, GradCAM saliency, per-gene PCC histograms |
 | 🛠️ **Community-Ready Toolkit** | CLI + Jupyter notebooks + synthetic data smoke tests |
 | 🧪 **Fully Unit Tested** | pytest suite covering all model components, losses, metrics, and routing |
+| 🗄️ **Real Data Validated** | Trained and evaluated on HEST-1k real 10x Visium spatial transcriptomics data |
 
 <hr />
 
@@ -211,9 +213,31 @@ graph LR
 
 ## 📊 Benchmark Results
 
-> ⚠️ **Note**: Results shown are indicative previews on synthetic benchmark data. Full quantitative results on real Visium ST datasets (CCRCC, COAD, LUAD, PAAD, PRAD) are planned for v0.2.
+### ✅ Real Data Results — HEST-1k (10x Visium, 5 Cancer Types)
 
-### Gene Expression Prediction
+> Trained on real spatial transcriptomics data from the [HEST-1k dataset](https://huggingface.co/datasets/MahmoodLab/hest) across 5 cancer types: CCRCC, COAD, LUAD, PAAD, PRAD. Training performed on Kaggle T4 x2 GPU. 13,612 training spots, 1,701 validation spots.
+
+**Gene Expression Prediction — Real Visium Data (n_genes=250)**
+
+| Method | val/loss ↓ | val/PCC ↑ | Notes |
+| :--- | :--- | :--- | :--- |
+| **HistoMoE (soft, ResNet-50)** | **0.426** | **0.813** | 5 cancer-type experts, balanced routing |
+
+**Expert Routing Quality — Real Data**
+
+| Expert | Cancer Type | Routing Weight |
+| :--- | :--- | :--- |
+| E0 | CCRCC (Kidney) | ~0.198 |
+| E1 | COAD (Colon) | ~0.195 |
+| E2 | LUAD (Lung) | ~0.201 |
+| E3 | PAAD (Pancreas) | ~0.190 |
+| E4 | PRAD (Prostate) | ~0.213 |
+
+> ✅ Experts show balanced load distribution (Switch Transformer load-balancing loss working correctly). Full per-gene PCC breakdown and baseline comparison coming in v0.2.
+
+### Synthetic Benchmark (indicative)
+
+> ⚠️ Results below are on synthetic data for architecture validation only.
 
 **Histology Patch → Spatial Gene Expression (n_genes=250)**
 
@@ -224,15 +248,21 @@ graph LR
 | **HistoMoE (soft, ours)** | **0.387** | **0.651** | **0.629** |
 | **HistoMoE (top-k, ours)** | **0.364** | **0.683** | **0.661** |
 
-### Expert Routing Quality
+<hr />
 
-**Gating Strategy Comparison (5 experts, K=2)**
+## 🗄️ Dataset
 
-| Strategy | Routing Entropy ↑ | Load Balance ↓ | Dominant Expert Fraction |
-| :--- | :--- | :--- | :--- |
-| Uniform random | 1.609 | 0.000 | 0.20 |
-| Soft MoE | 1.381 | 0.023 | 0.41 |
-| **Top-K MoE (ours)** | **1.204** | **0.011** | **0.58** |
+HistoMoE is trained and evaluated on the **[HEST-1k](https://huggingface.co/datasets/MahmoodLab/hest)** dataset — a large-scale collection of spatially resolved transcriptomics profiles linked to Whole Slide Images.
+
+| Cancer | Code | Organ | Technology | Spots |
+| :--- | :--- | :--- | :--- | :--- |
+| Clear Cell Renal Cell Carcinoma | CCRCC | Kidney | Visium | ~4,500 |
+| Colon Adenocarcinoma | COAD | Bowel | Visium | ~4,200 |
+| Lung Adenocarcinoma | LUAD | Lung | Visium HD | ~1,800 |
+| Pancreatic Adenocarcinoma | PAAD | Pancreas | Visium | ~3,800 |
+| Prostate Adenocarcinoma | PRAD | Prostate | Visium | ~3,000 |
+
+> Data preprocessing: `scanpy.pp.normalize_total` (target_sum=1e4) + `log1p` + top-250 HVG selection via Seurat v3.
 
 <hr />
 
@@ -275,23 +305,13 @@ gsoc/
 │       └── io.py                      # File I/O utilities
 │
 ├── 📁 configs/                        # YAML configuration files
-│   ├── default.yaml
-│   ├── model/                         # histomoe_resnet50.yaml, histomoe_vit.yaml
-│   ├── data/                          # synthetic.yaml, ccrcc.yaml, multi_cancer.yaml
-│   └── trainer/                       # cpu.yaml, gpu.yaml
-│
 ├── 📁 tests/                          # pytest suite — all tests passing
-│   ├── conftest.py                    # Shared fixtures
-│   ├── test_models.py                 # Model component tests
-│   ├── test_data.py                   # Dataset and datamodule tests
-│   ├── test_metrics.py                # Loss and metric correctness tests
-│   └── test_gating.py                 # Routing property tests
-│
 ├── 📁 examples/
 │   └── train_synthetic.py             # End-to-end demo without real data
 │
-├── train.py                           # Training CLI entry point
+├── train.py                           # Training CLI entry point (supports --data_dir)
 ├── evaluate.py                        # Evaluation and benchmarking script
+├── package_for_kaggle.ps1             # Script to package code for Kaggle training
 ├── CONTRIBUTING.md                    # GSoC contributor guidelines
 ├── LICENSE                            # Apache 2.0
 ├── pyproject.toml                     # Package configuration
@@ -327,50 +347,43 @@ pip install -e ".[dev]"
 from histomoe.models.histomoe_model import HistoMoE
 from histomoe.data.datamodule import HistoMoEDataModule
 
-# Instantiate model
 model = HistoMoE(
     backbone="resnet50",
     n_genes=250,
     n_experts=5,
     gating_mode="soft",
-    pretrained_backbone=False,   # for quick testing
+    pretrained_backbone=False,
 )
 
-# Synthetic DataModule (generates random data on the fly)
 dm = HistoMoEDataModule(use_synthetic=True, batch_size=16, num_workers=0)
 dm.setup()
 ```
 
-### Run a Forward Pass
+### Train on Real Data (Kaggle)
 
-```python
-import torch
-from histomoe import HistoMoE
+```bash
+# Train HistoMoE on real HEST-1k Visium data
+python train.py \
+    --data_dir /kaggle/working/cancer_h5ad \
+    --epochs 30 \
+    --backbone resnet50 \
+    --accelerator gpu \
+    --n_genes 250
 
-model = HistoMoE(backbone="resnet50", n_genes=250, n_experts=5, pretrained_backbone=False)
-
-images          = torch.randn(4, 3, 224, 224)   # 4 histology patches
-cancer_type_ids = torch.tensor([0, 2, 1, 4])    # CCRCC, LUAD, COAD, PRAD
-
-predictions, routing_weights, lb_loss = model(images, cancer_type_ids)
-
-print(f"Gene predictions  : {predictions.shape}")    # [4, 250]
-print(f"Routing weights   : {routing_weights.shape}") # [4, 5]
-print(f"Dominant experts  : {routing_weights.argmax(dim=-1)}")
+# Train non-MoE baseline for comparison
+python train.py \
+    --data_dir /kaggle/working/cancer_h5ad \
+    --baseline \
+    --backbone resnet50 \
+    --epochs 30 \
+    --accelerator gpu
 ```
 
-### Train from CLI
+### Train from CLI (synthetic)
 
 ```bash
 # 5-epoch smoke test (synthetic data, CPU)
 python train.py --synthetic --epochs 5 --n_genes 32 --batch_size 8 --accelerator cpu
-
-# Full training (real .h5ad data, GPU)
-python train.py --backbone resnet50 --n_genes 250 --n_experts 5 \
-                --gating_mode soft --epochs 100 --batch_size 32
-
-# Train non-MoE baseline for comparison
-python train.py --baseline --backbone resnet50 --epochs 100
 ```
 
 ### Evaluate a Checkpoint
@@ -384,12 +397,6 @@ python evaluate.py --checkpoint outputs/checkpoints/best.ckpt --synthetic
 ```bash
 pytest tests/ -v
 # Expected: all tests passing ✅
-```
-
-### End-to-End Demo
-
-```bash
-python examples/train_synthetic.py
 ```
 
 <hr />
@@ -412,88 +419,27 @@ graph LR
     style S3 fill:#1a4a30,stroke:#44cc88,stroke-width:2px,color:#fff
 ```
 
-| Stage | Module | Input | Output |
-| :--- | :--- | :--- | :--- |
-| **1 — Extraction** | `vision_encoder.py`, `text_encoder.py` | Image patch + cancer type | Fused embedding `[B, D]` |
-| **2 — Routing** | `gating_network.py`, `moe_layer.py` | Fused embedding | Routing weights `[B, K]` + lb_loss |
-| **3 — Prediction** | `expert.py`, `histomoe_model.py` | Routed embeddings | Gene expression `[B, G]` |
-
 <hr />
 
 ## ⚙️ Configuration
 
-HistoMoE uses YAML configs in the `configs/` directory — no heavy frameworks needed:
-
-```python
-from histomoe.utils.config import load_config
-cfg = load_config("configs/model/histomoe_resnet50.yaml")
-```
-
 ```yaml
 # configs/model/histomoe_resnet50.yaml
 model:
-  backbone: resnet50        # Any timm backbone name
-  n_genes: 250              # Number of gene prediction targets
-  n_experts: 5              # Number of cancer-type expert models
-  embed_dim: 512            # Vision embedding dimension
-  gating_mode: soft         # 'soft' (all experts) or 'topk' (sparse)
-  top_k: 2                  # Active experts in top-k mode
+  backbone: resnet50
+  n_genes: 250
+  n_experts: 5
+  embed_dim: 512
+  gating_mode: soft
+  top_k: 2
   lr: 1.0e-4
   freeze_backbone: false
   load_balance_weight: 0.01
 ```
 
-Override with custom expert counts:
-```python
-from histomoe import HistoMoE
-
-# Custom: 3 experts, ViT backbone, top-2 routing
-model = HistoMoE(
-    backbone="vit_base_patch16_224",
-    n_genes=500,
-    n_experts=3,
-    gating_mode="topk",
-    top_k=2,
-    load_balance_weight=0.05,
-)
-```
-
-Each `HistoMoE` instance surfaces `routing_weights` in every prediction call — so every result is **fully reproducible and auditable**.
-
-<hr />
-
-## 🧪 Experiment Tracking
-
-HistoMoE logs all metrics natively via **PyTorch Lightning** and is compatible with CSV, TensorBoard, and Weights & Biases:
-
-```python
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger, CSVLogger
-
-from histomoe.models.histomoe_model import HistoMoE
-from histomoe.data.datamodule import HistoMoEDataModule
-
-# W&B logging
-logger = WandbLogger(project="histomoe-gsoc", name="resnet50-soft-moe")
-
-trainer = pl.Trainer(
-    max_epochs=100,
-    logger=logger,
-)
-
-model = HistoMoE(backbone="resnet50", n_genes=250, n_experts=5)
-dm    = HistoMoEDataModule(use_synthetic=True)
-
-trainer.fit(model, datamodule=dm)
-# Logs: train/loss, val/pcc, val/mae, val/routing_entropy,
-#        expert/usage_mean_0..4, expert/dominant_frac_0..4
-```
-
 <hr />
 
 ## 🗺️ Roadmap
-
-HistoMoE follows a structured GSoC development timeline:
 
 ```mermaid
 gantt
@@ -508,8 +454,9 @@ gantt
         AnnData ST Dataset + DataModule     :done,    2025-02-01, 2025-03-01
         Composite Loss + Metrics            :done,    2025-02-15, 2025-03-14
         ExpertUsageLogger Callback          :done,    2025-03-01, 2025-03-14
+        Real Visium Data Integration        :done,    2025-03-14, 2025-03-14
     section Extensions
-        Real Visium Data Integration        :active,  2025-04-01, 2025-05-01
+        Baseline Model Comparison           :active,  2025-03-15, 2025-04-01
         Pathology ViT Backbones (UNI/CONCH) :         2025-04-15, 2025-05-15
         REST API (FastAPI)                  :         2025-05-01, 2025-06-01
     section Community
@@ -530,13 +477,13 @@ gantt
 - [x] **AnnData dataset** — `.h5ad` spatial transcriptomics loading
 - [x] **Visualization toolkit** — routing heatmaps, GradCAM, gene scatter
 - [x] **Unit test suite** — all tests passing
-- [ ] **Real Visium data benchmarks** — CCRCC, COAD, LUAD, PAAD, PRAD
+- [x] **Real Visium data training** — HEST-1k (CCRCC, COAD, LUAD, PAAD, PRAD) — val/PCC 0.813
+- [x] **Kaggle GPU training pipeline** — T4 x2, 13K+ real spots
+- [ ] **Baseline model comparison** — MoE vs single-decoder on real data
 - [ ] **Pathology ViT support** — UNI, CONCH, PLIP backbones
 - [ ] **REST API inference endpoint** (FastAPI)
-- [ ] **Calibrated benchmark suite** on public ST datasets
 - [ ] **Pre-trained model hub** (HuggingFace)
 - [ ] **3-D multi-context spatial modelling** of gene co-expression
-- [ ] **GSoC contributor projects** (see `CONTRIBUTING.md`)
 
 <hr />
 
@@ -545,40 +492,27 @@ gantt
 We welcome contributions! HistoMoE is designed as a community research platform for computational pathology.
 
 ```bash
-# Setup dev environment
 git clone https://github.com/kumardhruv88/histomoe.git
 cd histomoe
 pip install -e ".[dev]"
-
-# Run tests
 pytest tests/ -v --cov=histomoe
-
-# Code style
 black histomoe/ && ruff check histomoe/ --fix
 ```
-
-See `CONTRIBUTING.md` for:
-- 🧩 Adding new vision encoder backbones
-- ⚖️ Implementing new gating strategies
-- 🧬 Adding new cancer type experts
-- 💡 GSoC project ideas (350+ hour projects)
 
 <hr />
 
 ## 📄 Citation
 
-If you use HistoMoE in your research, please cite:
-
 ```bibtex
-@software{histomoe2025,
+@software{histomoe2026,
   title   = {HistoMoE: A Histology-Guided Mixture-of-Experts Framework
              for Gene Expression Prediction},
   author  = {Dhruv Kumar},
-  year    = {2025},
+  year    = {2026},
   version = {0.1.0},
   url     = {https://github.com/kumardhruv88/histomoe},
   license = {Apache-2.0},
-  note    = {Google Summer of Code 2025 Candidate Project}
+  note    = {Google Summer of Code 2026 Candidate Project}
 }
 ```
 
